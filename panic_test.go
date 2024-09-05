@@ -3,6 +3,7 @@ package flowmatic_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync/atomic"
 	"testing"
 
@@ -47,7 +48,7 @@ func TestEach_panic(t *testing.T) {
 		err error
 	)
 	r := try(func() {
-		err = flowmatic.Each(1, []int64{1, 2, 3},
+		err = flowmatic.Each(1, slices.Values([]int64{1, 2, 3}),
 			func(delta int64) error {
 				if delta == 2 {
 					panic("boom")
