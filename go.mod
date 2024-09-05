@@ -1,4 +1,4 @@
-module github.com/earthboundkid/flowmatic
+module github.com/earthboundkid/flowmatic/v2
 
 go 1.23
 

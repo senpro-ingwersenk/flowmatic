@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/earthboundkid/flowmatic"
+	"github.com/earthboundkid/flowmatic/v2"
 )
 
 var (

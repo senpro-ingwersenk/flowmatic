@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/earthboundkid/flowmatic"
+	"github.com/earthboundkid/flowmatic/v2"
 )
 
 func TestEach_err(t *testing.T) {

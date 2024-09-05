@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/earthboundkid/flowmatic"
+	"github.com/earthboundkid/flowmatic/v2"
 )
 
 func ExampleAll() {

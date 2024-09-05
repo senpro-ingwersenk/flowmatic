@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/earthboundkid/flowmatic"
+	"github.com/earthboundkid/flowmatic/v2"
 )
 
 func try(f func()) (r any) {
