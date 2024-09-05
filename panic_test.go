@@ -18,7 +18,7 @@ func try(f func()) (r any) {
 	return
 }
 
-func TestManageTasks_panic(t *testing.T) {
+func TestTasks_panic(t *testing.T) {
 	task := func(n int) (int, error) {
 		if n == 3 {
 			panic("3!!")
@@ -27,7 +27,7 @@ func TestManageTasks_panic(t *testing.T) {
 	}
 	var triples []int
 	r := try(func() {
-		for r := range flowmatic.Tasks(1, task, 1, 2, 3, 4) {
+		for r := range flowmatic.Tasks(1, task, 1, 2, 3, 4, 5, 6, 7) {
 			triples = append(triples, r.Out)
 		}
 	})
@@ -48,7 +48,7 @@ func TestEach_panic(t *testing.T) {
 		err error
 	)
 	r := try(func() {
-		err = flowmatic.Each(1, slices.Values([]int64{1, 2, 3}),
+		err = flowmatic.Each(1, slices.Values([]int64{1, 2, 4, 8, 16}),
 			func(delta int64) error {
 				if delta == 2 {
 					panic("boom")
@@ -66,7 +66,7 @@ func TestEach_panic(t *testing.T) {
 	if r != "boom" {
 		t.Fatal(r)
 	}
-	if n.Load() != 4 {
+	if n.Load() != 29 {
 		t.Fatal(n.Load())
 	}
 }
