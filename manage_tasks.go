@@ -3,7 +3,7 @@ package flowmatic
 import (
 	"iter"
 
-	"github.com/carlmjohnson/deque"
+	"github.com/earthboundkid/deque/v2"
 )
 
 // manager is a function that serially examines Task results to see if it produced any new Inputs.
@@ -53,37 +53,39 @@ func manageTasks[Input, Output any](numWorkers int, task Task[Input, Output], ma
 	}
 }
 
-type TaskOutput[Input, Output any] struct {
+type TaskResult[Input, Output any] struct {
 	In       Input
 	Out      Output
 	Err      error
-	pushtask func(Input)
+	newitems []Input
 }
 
-func (to *TaskOutput[Input, Output]) HasErr() bool {
+func (to *TaskResult[Input, Output]) HasErr() bool {
 	return to.Err != nil
 }
 
-func (to *TaskOutput[Input, Output]) AddTask(in Input) {
-	to.pushtask(in)
+func (to *TaskResult[Input, Output]) AddTask(in Input) {
+	to.newitems = append(to.newitems, in)
 }
 
-func Tasks[Input, Output any](numWorkers int, task Task[Input, Output], initial ...Input) iter.Seq[*TaskOutput[Input, Output]] {
-	return func(yield func(*TaskOutput[Input, Output]) bool) {
+// Tasks runs tasks concurrently
+// using numWorkers concurrent workers (or GOMAXPROCS workers if numWorkers < 1)
+// which a sequence of TaskResults yielded serially.
+// To add more jobs to call AddTask on the TaskResult.
+// If a task panics during execution,
+// the panic will be caught and rethrown.
+func Tasks[Input, Output any](numWorkers int, task Task[Input, Output], initial ...Input) iter.Seq[*TaskResult[Input, Output]] {
+	return func(yield func(*TaskResult[Input, Output]) bool) {
 		manager := func(in Input, out Output, err error) ([]Input, bool) {
-			var newitems []Input
-			to := TaskOutput[Input, Output]{
+			to := TaskResult[Input, Output]{
 				In:  in,
 				Out: out,
 				Err: err,
-				pushtask: func(newin Input) {
-					newitems = append(newitems, newin)
-				},
 			}
 			if !yield(&to) {
 				return nil, false
 			}
-			return newitems, true
+			return to.newitems, true
 		}
 
 		manageTasks(numWorkers, task, manager, initial...)

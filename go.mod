@@ -1,5 +1,5 @@
 module github.com/earthboundkid/flowmatic
 
-go 1.22
+go 1.23
 
-require github.com/carlmjohnson/deque v0.23.1
+require github.com/earthboundkid/deque/v2 v2.24.2

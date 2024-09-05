@@ -3,6 +3,7 @@ package flowmatic_test
 import (
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -12,7 +13,7 @@ import (
 	"github.com/earthboundkid/flowmatic"
 )
 
-func ExampleAllTasks() {
+func ExampleTasks() {
 	// Example site to crawl with recursive links
 	srv := httptest.NewServer(http.FileServer(http.FS(fstest.MapFS{
 		"index.html": &fstest.MapFile{
@@ -28,7 +29,7 @@ func ExampleAllTasks() {
 			Data: []byte("/c.html"),
 		},
 		"c.html": &fstest.MapFile{
-			Data: []byte("/"),
+			Data: []byte("/\n/x.html"),
 		},
 	})))
 	defer srv.Close()
@@ -41,6 +42,9 @@ func ExampleAllTasks() {
 			return nil, err
 		}
 		defer res.Body.Close()
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("bad response: %q", u)
+		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, err
@@ -49,39 +53,32 @@ func ExampleAllTasks() {
 		return strings.Split(string(body), "\n"), nil
 	}
 
-	// Manager keeps track of which pages have been visited and the results graph
-	tried := map[string]int{}
+	// results tracks which urls a url links to
 	results := map[string][]string{}
+	// tried tracks how many times a url has been queued to be fetched
+	tried := map[string]int{}
 
 	// Process the tasks with as many workers as GOMAXPROCS
-	it := flowmatic.Tasks(flowmatic.MaxProcs, task, "/")
-	for r := range it {
-		req := r.In
-		urls := r.Out
-		if r.HasErr() {
+	for task := range flowmatic.Tasks(flowmatic.MaxProcs, task, "/") {
+		req, urls := task.In, task.Out
+		if task.HasErr() {
 			// If there's a problem fetching a page, try three times
 			if tried[req] < 3 {
 				tried[req]++
-				r.AddTask(req)
-				continue
+				task.AddTask(req)
 			}
-			break
+			continue
 		}
 		results[req] = urls
 		for _, u := range urls {
 			if tried[u] == 0 {
-				r.AddTask(u)
+				task.AddTask(u)
 				tried[u]++
 			}
 		}
 	}
 
-	keys := make([]string, 0, len(results))
-	for key := range results {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
-	for _, key := range keys {
+	for _, key := range slices.Sorted(maps.Keys(results)) {
 		fmt.Println(key, "links to:")
 		for _, v := range results[key] {
 			fmt.Println("- ", v)
